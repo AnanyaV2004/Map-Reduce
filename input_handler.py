@@ -4,7 +4,7 @@ from mpi4py import MPI
 import os
 from task import task
 
-class mapreduce_imp:
+class input_handler:
 
     def __init__ (self, input_dir):
         self.__input_dir = input_dir
