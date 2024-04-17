@@ -1,11 +1,9 @@
-from task import task
+from Tasks.task import task
 
-class task_handler:
+class tasks_handler:
 
     def __init__(self, comm):
         self.comm = comm
-        self.task_pointer = 0
-        pass
 
     def assign_tasks(self, tasks, size):
 
