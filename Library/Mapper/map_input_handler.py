@@ -2,10 +2,10 @@
 
 from mpi4py import MPI
 import os
-from Tasks.task import task
+from task import task
 # from store import store
 
-class input_handler:
+class map_input_handler:
 
     def __init__ (self,store):
         self.__tasks = []
