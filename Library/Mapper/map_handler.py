@@ -16,11 +16,12 @@ class message_tags(Enum):
         
 class map_handler:
 
-    def __init__(self, input_store, intermediate_store, specs):
+    def __init__(self, input_store, intermediate_store, specs, comm):
         self.__map_tasks = []
         self.__intermediate_store = intermediate_store 
         self.__input_store = input_store
         self.__specs = specs
+        self.__comm = comm
         # self.__failed_works = []
         
 
@@ -28,7 +29,7 @@ class map_handler:
         # this will be the input for reducer and output of mapper
 
     def run(self, mapper_fn):
-        comm = MPI.COMM_WORLD
+        comm = self.__comm
         rank = comm.Get_rank()
 
         assert(comm.Get_size() >= self.__specs.get_num_mappers()+1)
@@ -131,7 +132,7 @@ class map_handler:
         # non root processes
         else:
             my_task = comm.recv(source=0)
-            mapper_fn.execute(my_task, self.__intermediate_store)
+            mapper_fn.execute(my_task.key, my_task.value, self.__intermediate_store)
             ping_flag = True
             current_task_id = -1
             current_task = None
@@ -176,14 +177,4 @@ class map_handler:
 
             ping_flag = False
             ping_thread.join()
-
-            
-
-            
-            
-
-        
-
-    
-
-        
+                    

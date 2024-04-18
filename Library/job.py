@@ -1,27 +1,32 @@
+from storage import store
+from Mapper.map_input_handler import map_input_handler
+from Mapper.map_handler import map_handler
+from map_combine_handler import map_combine_handler
+from reduce_gather_handler import reduce_gather_handler
+from specs import specs
+from task import task
+import mpi4py as MPI
+
 class job:
 
-    def run(self):
-        pass
-        # call input handler
-        # call map
+    def __init__(self, num_mappers, num_reducers):
+        
+        self.num_mappers = num_mappers
+        self.num_reducers = num_reducers
 
-    # void run(const Specifications& spec, boost::mpi::communicator& comm)
-    #     {
-    #         // we require at least one worker
-    #         assert(spec.num_map_workers >= 1);
-    #         assert(spec.num_reduce_workers >= 1);
-    #         assert(comm.size() >= spec.num_map_workers + 1);
-    #         assert(comm.size() >= spec.num_reduce_workers + 1);
+    def run(self, mapper_fn, combiner_fn, reducer_fn, comm, input_store, output_store):
 
-    #         comm.barrier();
-    #         run_map_phase(spec, comm);
-    #         comm.barrier();
-    #         run_combine_phase(spec, comm);
-    #         comm.barrier();
-    #         run_shuffle_phase(spec, comm);
-    #         comm.barrier();
-    #         run_reduce_phase(spec, comm);
-    #         comm.barrier();
-    #         run_gather_phase(spec, comm);
-    #         comm.barrier();
-    #     }
+        specs = specs(self.num_mappers, self.num_reducers)
+        intermediate_store = store()
+
+        assert(specs.num_map_workers >= 1)
+        assert(specs.num_reduce_workers >= 1)
+        assert(comm.size() >= specs.num_map_workers + 1)
+        assert(comm.size() >= specs.num_reduce_workers + 1)
+        
+        map_handler(input_store, intermediate_store, comm).run(mapper_fn)
+        comm.barrier()
+        map_combine_handler(intermediate_store, comm, specs).run(combiner_fn)
+        comm.barrier()
+        reduce_gather_handler(specs, comm, output_store).run(reducer_fn)
+        comm.barrier()

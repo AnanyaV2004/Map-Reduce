@@ -16,7 +16,11 @@ class map_input_handler:
         keys = store.get_keys()
         for key in keys:
             value = store.get_key_values(key)
-            task = task(key,value)
+            key_ = []
+            key_.append(key)
+            value_ = []
+            value_.append(value)
+            task = task(key_,value_)
         self.__tasks.push(task)
     
     def get_next_task(self):
