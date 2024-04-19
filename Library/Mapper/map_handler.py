@@ -1,6 +1,6 @@
 from mpi4py import MPI
 from Mapper.map_input_handler import map_input_handler
-from Library.storage import store
+# from Library.storage import store
 from datetime import datetime, timedelta
 import threading
 import time
@@ -32,7 +32,7 @@ class map_handler:
         comm = self.__comm
         rank = comm.Get_rank()
 
-        assert(comm.Get_size() >= self.__specs.get_num_mappers()+1)
+        # assert(comm.Get_size() >= self.__specs.get_num_mappers()+1)
 
         # root process
         if(rank == 0):

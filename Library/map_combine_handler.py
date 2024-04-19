@@ -1,5 +1,5 @@
 from typing import TypeVar, Generic
-import mpi4py as MPI
+from mpi4py import MPI
 import heapq
 from storage import store
 

@@ -1,10 +1,12 @@
-from Library.storage import store
-from Library.job import job
-import mpi4py as MPI
+from mpi4py import MPI
 import sys
 import multiprocessing
 import argparse
 
+# sys.path.insert(0, '/home/shambhavi/Documents/3-2/DS/project/our-version/Map-Reduce/Library')
+
+from storage import store
+from job import job
 
 class Map:
     def execute(self, keys, values, output_store):
@@ -38,7 +40,11 @@ class Combine:
 
 if __name__ == "__main__":
     mpi_comm = MPI.COMM_WORLD
+    print("COMM SIZEEEEEEEE")
+    print(mpi_comm.size)
     rank = mpi_comm.Get_rank()
+    size = mpi_comm.Get_size()
+    print(size)
     if rank == 0:
         print("MapReduce Example: Wordcount")
 
@@ -67,6 +73,7 @@ if __name__ == "__main__":
     combiner_fn = Combine()
     reducer_fn = Reduce()
     job = job(args.num_map_workers, args.num_reduce_workers)
+    
     job.run(map_fn, combiner_fn, reducer_fn, mpi_comm, input_store, output_store)
 
     if rank == 0:

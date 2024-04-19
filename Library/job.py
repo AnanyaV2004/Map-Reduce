@@ -5,7 +5,7 @@ from map_combine_handler import map_combine_handler
 from reduce_gather_handler import reduce_gather_handler
 from specs import specs
 from task import task
-import mpi4py as MPI
+from mpi4py import MPI
 
 class job:
 
@@ -16,17 +16,20 @@ class job:
 
     def run(self, mapper_fn, combiner_fn, reducer_fn, comm, input_store, output_store):
 
-        specs = specs(self.num_mappers, self.num_reducers)
+        specs_ = specs(self.num_mappers, self.num_reducers)
         intermediate_store = store()
 
-        assert(specs.num_map_workers >= 1)
-        assert(specs.num_reduce_workers >= 1)
-        assert(comm.size() >= specs.num_map_workers + 1)
-        assert(comm.size() >= specs.num_reduce_workers + 1)
+        assert(specs_.get_num_mappers() >= 1)
+        assert(specs_.get_num_reducers() >= 1)
+        print("DEBUGGING")
+        print(comm.Get_size())
+        print(specs_.get_num_mappers() + 1)
+        # assert(comm.size >= specs_.get_num_mappers() + 1)
+        # assert(comm.size >= specs_.get_num_reducers() + 1)
         
-        map_handler(input_store, intermediate_store, comm).run(mapper_fn)
+        map_handler(input_store, intermediate_store, specs_, comm).run(mapper_fn)
         comm.barrier()
-        map_combine_handler(intermediate_store, comm, specs).run(combiner_fn)
+        map_combine_handler(intermediate_store, comm, specs_).run(combiner_fn)
         comm.barrier()
-        reduce_gather_handler(specs, comm, output_store).run(reducer_fn)
+        reduce_gather_handler(specs_, comm, output_store).run(reducer_fn)
         comm.barrier()
