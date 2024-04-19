@@ -10,7 +10,10 @@ from job import job
 
 class Map:
     def execute(self, keys, values, output_store):
-        for word in keys:
+        print("executing user mapper function")
+        print(keys)
+        print(values)
+        for word in values:
             output_store.emit(word, 1)
 
 class Reduce:
@@ -40,11 +43,8 @@ class Combine:
 
 if __name__ == "__main__":
     mpi_comm = MPI.COMM_WORLD
-    print("COMM SIZEEEEEEEE")
-    print(mpi_comm.size)
     rank = mpi_comm.Get_rank()
     size = mpi_comm.Get_size()
-    print(size)
     if rank == 0:
         print("MapReduce Example: Wordcount")
 

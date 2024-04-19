@@ -13,7 +13,7 @@ class job:
         
         self.num_mappers = num_mappers
         self.num_reducers = num_reducers
-
+        
     def run(self, mapper_fn, combiner_fn, reducer_fn, comm, input_store, output_store):
 
         specs_ = specs(self.num_mappers, self.num_reducers)

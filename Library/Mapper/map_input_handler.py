@@ -4,6 +4,7 @@ from mpi4py import MPI
 import os
 from task import task
 # from store import store
+import tags
 
 class map_input_handler:
 
@@ -20,8 +21,8 @@ class map_input_handler:
             key_.append(key)
             value_ = []
             value_.append(value)
-            task = task(key_,value_)
-        self.__tasks.push(task)
+            task_ = task(key_,value_)
+        self.__tasks.append(task_)
     
     def get_next_task(self):
         self.__task_ptr+=1

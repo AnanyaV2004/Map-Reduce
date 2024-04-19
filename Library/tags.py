@@ -1,5 +1,7 @@
 # tags.py
-
+StartMapPhase = 16
+AssignedMapTask = 15
+CompletedMapTask = 14
 MapPhaseBegin = 0
 MapTaskAssignment = 1
 MapTaskCompletion = 2
