@@ -117,9 +117,9 @@ class map_handler:
                     
                     elif msg_status_root.Get_tag() == tags.CompletedMapTask:
 
-                        task_id = None
+                        task_id = data
                         # comm.recv([task_id, MPI.INT], source=msg.source, tag=tags.CompletedMapTask)
-                        print(comm, "received MapTaskCompletion from", msg.source, "for task_id", task_id)
+                        print(comm, "received MapTaskCompletion from", msg_status_root.Get_source(), "for task_id", task_id)
                         
                         map_tasks_pending -= 1
                         self.__map_tasks[task_id].status = "completed"
@@ -127,7 +127,7 @@ class map_handler:
 
                         next_task = input_tasks.get_next_task()
                         if next_task:
-                            assign_task(msg.source, next_task)
+                            assign_task(msg_status_root.Get_source(), next_task)
 
                         else:
                             if failed_tasks:
@@ -136,12 +136,13 @@ class map_handler:
 
                                     # re assign tasks
                                     if task.worker == -1:
-                                        assign_task(msg.source, i, True)
+                                        assign_task(msg_status_root.Get_source(), task, True)
                                         failed_tasks -= 1
 
                     else:
                         print("received: ")
                         print(msg_status_root.Get_tag())
+                        
             # after finishing all map tasks, send MapPhaseEnd message to all workers
             for i in range(1, self.__specs.get_num_mappers() + 1):
                 print(comm, "sending MapPhaseEnd to", i)
@@ -203,8 +204,8 @@ class map_handler:
                     #         mapper_fn.execute(key, value, self.__input_store)
 
                     current_task_id = -1
-                    print("Process", rank, "sent MapTaskCompletion with task id", task_id)
-                    comm.send(task_id, dest=0, tag=tags.CompletedMapTask)
+                    print("Process", rank, "sent MapTaskCompletion with task id", task.id)
+                    comm.send(task.id, dest=0, tag=tags.CompletedMapTask)
                     
                 elif msg_status.Get_tag() == tags.MapPhaseEnd:
                     print("Process", rank, "received MapPhaseEnd")
