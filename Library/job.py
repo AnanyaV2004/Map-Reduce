@@ -31,6 +31,9 @@ class job:
         print("completing map combine handler")
         comm.barrier()
         print("completing barrier")
+        print("PRINTING INTERMEDIATE STORAGE AFTER MAP COMBINE-SHUFFLE PHASE")
+        for key in intermediate_store.get_keys():
+            print("the pair is :",key, intermediate_store.get_key_values(key))
         reduce_gather_handler(specs_, comm, output_store).run(reducer_fn)
         print("completing reduce gather handler")
         comm.barrier()

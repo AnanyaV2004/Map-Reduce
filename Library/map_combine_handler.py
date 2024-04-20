@@ -16,10 +16,13 @@ class map_combine_handler:
     def run(self, combine_fn):
         self.run_combine_phase(combine_fn)
         self.__comm.barrier()
-        print("PRINTING INTERMEDIATE STORAGE AFTER MAP COMBINE PHASE")
-        for key in self.__istore.get_keys():
-            print(key, self.__istore.get_key_values(key))
+        if(self.__comm.Get_rank() == 1):
+            print("PRINTING INTERMEDIATE STORAGE AFTER MAP COMBINE PHASE")
+            for key in self.__istore.get_keys():
+                print(key, self.__istore.get_key_values(key))
         self.run_shuffle_phase()
+        
+            
 
     def run_combine_phase(self, combine_fn):
           
@@ -97,22 +100,34 @@ class map_combine_handler:
     
                 for p in reduce_workers:
                     # if p != comm.rank:
-                    comm.send(None, dest=p, tag=tags.ShufflePayloadDeliveryComplete)
+                    comm.send("shuffle_done", dest=p, tag=tags.ShufflePayloadDeliveryComplete)
     
             if comm.rank in reduce_workers:
                 awaiting_completion = len(map_workers)
                 while awaiting_completion:
                     status = MPI.Status()
-                    if comm.probe(status=status):
-                        msg = comm.recv(source=status.source, tag=status.tag)
-                        if msg.tag == tags.ShufflePayloadDelivery:
-                            key, values = comm.recv(source=msg.source, tag=tags.ShufflePayloadDelivery)
-                            new_istore.emit(key, values)
-                        elif msg.tag == tags.ShufflePayloadDeliveryComplete:
-                            comm.recv(source=msg.source, tag=tags.ShufflePayloadDeliveryComplete)
-                            awaiting_completion -= 1
+                    if comm.probe():
+                        msg= comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+                         # Get the tag of the received message from the status object
+                        tag=status.Get_tag()
+                        print("msg tag ",tag)
+                        print(msg is None)
+                        print("Received message:", msg)  # Add this line for debugging
+                        if msg is not None:  # Check if msg is not None before accessing its attributes
+                            if tag == tags.ShufflePayloadDelivery:
+                                key, values = msg
+                                print("recieved message : " , key , values)
+                                new_istore.emit(key, values)
+                            elif tag == tags.ShufflePayloadDeliveryComplete:
+                                print("here")
+                                # msg = comm.recv(source=msg.source, tag=tags.ShufflePayloadDeliveryComplete)
+                                print("recieved shufflepay complete msg")
+                                awaiting_completion -= 1
+                            else:
+                                assert 0
                         else:
-                            assert 0
+                            print("Received None message, skipping processing.")  # Add this line for debugging
+
         
             self.__istore = new_istore
     
