@@ -1,8 +1,8 @@
 class task:
     def __init__(self, key, value):
         self.id = None
-        self.key = key
-        self.value = value
+        self.key = key #line ind
+        self.value = value #line
         self.worker = -1
         self.status = "unassigned" # possible status: unassigned, assigned, completed
         self.start_time = None

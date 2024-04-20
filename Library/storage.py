@@ -36,6 +36,7 @@ class store():
 
                     with open(filepath, 'r') as file:    
                         for line in file:
+                            line = line.strip('\n')
                             id +=1 
                             self.__pairs[id] = line
         
@@ -55,7 +56,11 @@ class store():
 
     def get_key_counts(self):
         counts = {}
-        for key,value in self.__pairs:
+        # print("inside get_key_counts\n")
+        # print("self.pairs",self.__pairs)
+        
+        for key in self.__pairs.keys():
+            value = self.__pairs[key]
             counts[key] = len(value)
         return counts
 

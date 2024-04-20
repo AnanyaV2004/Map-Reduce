@@ -22,10 +22,6 @@ class job:
         assert(specs_.get_num_mappers() >= 1)
         assert(specs_.get_num_reducers() >= 1)
         print("DEBUGGING")
-        print(comm.Get_size())
-        print(specs_.get_num_mappers() + 1)
-        # assert(comm.size >= specs_.get_num_mappers() + 1)
-        # assert(comm.size >= specs_.get_num_reducers() + 1)
         
         map_handler(input_store, intermediate_store, specs_, comm).run(mapper_fn)
         print("completing map handler")

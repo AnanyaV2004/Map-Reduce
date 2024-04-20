@@ -22,14 +22,19 @@ class map_input_handler:
             value_ = []
             value_.append(value)
             task_ = task(key_,value_)
-        self.__tasks.append(task_)
+            self.__tasks.append(task_)
+        # print("tasks:",self.__tasks)
     
     def get_next_task(self):
+        # print("on task pointer ",self.__task_ptr)
         self.__task_ptr+=1
         if(len(self.__tasks) > self.__task_ptr):
             return self.__tasks[self.__task_ptr]
         else:
             return None
+    
+    def get_all_tasks(self):
+        return self.__tasks
     
  
         

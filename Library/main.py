@@ -29,16 +29,15 @@ class Reduce:
                 count = 1
 
 class Combine:
-    def execute(self, keys, values, output_store):
-        word = keys[0]
-        count = 0
-        for key in keys:
-            if key == word:
-                count += 1
-            else:
-                output_store.emit(word, count)
-                word = key
-                count = 1
+    def execute(self, key, values, output_store):
+        # print("key , values recieved in combine.execute:" , key , values)
+
+        count=0
+        for value in values:
+            count+=int(value)
+        output_store.emit(key, count)
+        # print("emitted to output store from combine:",key,count)
+        
 
 
 if __name__ == "__main__":
@@ -67,6 +66,8 @@ if __name__ == "__main__":
         print("number of reduce workers:", args.num_reduce_workers)
 
     input_store = store(args.directory)
+    # for key in input_store.get_keys():
+        # print(key,input_store.get_key_values(key))
     output_store = store()
 
     map_fn = Map()

@@ -25,28 +25,31 @@ class map_handler:
     def run(self, mapper_fn):
         comm = self.__comm
         rank = comm.Get_rank()
-
+        # print("this is process     ",rank)
         # assert(comm.Get_size() >= self.__specs.get_num_mappers()+1)
 
         # root process
         if(rank == 0):
 
             for i in range(1, self.__specs.get_num_mappers()+1):
-                print("sending map phase begin to", i)
+                # print("sending map phase begin to", i)
                 try:
                     # comm.send(tags.StartMapPhase, dest=i)
                     comm.send(None, dest=i, tag=tags.StartMapPhase)
                 except MPI.Exception as e:
                     print("Error occurred while sending message to process", i)
                     print("Error message:", e)
-                else:
-                    print("Message sent successfully to process", i)
+                # else:
+                    # print("Message sent successfully to process", i)
 
             map_tasks_pending = 0
             failed_tasks = 0
             input_tasks = map_input_handler(self.__input_store)
+            # print("all tasks in input_tasks")
+            # print(input_tasks.get_all_tasks())
 
-            # assigns task to a node with rank=rank andif reassign = true, then reassigns the task
+            # print("right till map input handler")
+            # assigns task to a node with rank=rank and if reassign = true, then reassigns the task
             def assign_task(rank, task, map_tasks_pending, reassign=False):
                 if task == None:
                     return
@@ -61,7 +64,7 @@ class map_handler:
                     self.__map_tasks.append(task)
                     map_tasks_pending += 1
 
-                print("assigned task", task.id, "to process", rank)
+                # print("assigned task", task.id, "that is line : ",task.value, "to process", rank)
                 serialized_task = pickle.dumps(task)  
                 comm.send(serialized_task, dest=rank, tag=tags.AssignedMapTask)
                 return map_tasks_pending
@@ -71,13 +74,14 @@ class map_handler:
                 task = input_tasks.get_next_task()
                 if(task == None):
                     break
+                # print("Initially assigning task ", task.id, "thai is line", task.value, "to process", i)
                 map_tasks_pending = assign_task(i,task,map_tasks_pending)
 
 
             while map_tasks_pending:
              
                 status = comm.Iprobe()
-                print("Printing from root again")
+                # print("Printing from root again")
                 # print(status.Get_source())
                 # print(status)
                 if not status:
@@ -106,20 +110,20 @@ class map_handler:
                     
                     msg_status_root = MPI.Status()
                     data = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=msg_status_root)
-                    print("receiving some message in root")
+                    # print("receiving some message in root")
                     if msg_status_root.Get_tag() == tags.MapPhasePing:
                         task_id = data
                         # comm.recv([task_id, MPI.INT], source=msg.source, tag=tags.MapPhasePing)
                         # task_id = msg_status_root.Get_source()
                         if task_id is not None:
                             self.__map_tasks[task_id].last_ping_time = datetime.now()
-                        print(comm, "received MapPhasePing from", msg_status_root.Get_source(), "for task_id", task_id)
+                        # print(comm, "received MapPhasePing from", msg_status_root.Get_source(), "for task_id", task_id)
                     
                     elif msg_status_root.Get_tag() == tags.CompletedMapTask:
 
                         task_id = data
                         # comm.recv([task_id, MPI.INT], source=msg.source, tag=tags.CompletedMapTask)
-                        print(comm, "received MapTaskCompletion from", msg_status_root.Get_source(), "for task_id", task_id)
+                        # print(comm, "received MapTaskCompletion from", msg_status_root.Get_source(), "for task_id", task_id)
                         
                         map_tasks_pending -= 1
                         self.__map_tasks[task_id].status = "completed"
@@ -127,7 +131,7 @@ class map_handler:
 
                         next_task = input_tasks.get_next_task()
                         if next_task:
-                            assign_task(msg_status_root.Get_source(), next_task)
+                            assign_task(msg_status_root.Get_source(), next_task, map_tasks_pending)
 
                         else:
                             if failed_tasks:
@@ -136,23 +140,25 @@ class map_handler:
 
                                     # re assign tasks
                                     if task.worker == -1:
-                                        assign_task(msg_status_root.Get_source(), task, True)
+                                        assign_task(msg_status_root.Get_source(), task, map_tasks_pending, True)
                                         failed_tasks -= 1
 
                     else:
-                        print("received: ")
-                        print(msg_status_root.Get_tag())
+                        pass
+                        #print()
+                        # print("received: ")
+                        # print(msg_status_root.Get_tag())
                         
             # after finishing all map tasks, send MapPhaseEnd message to all workers
             for i in range(1, self.__specs.get_num_mappers() + 1):
-                print(comm, "sending MapPhaseEnd to", i)
+                # print(comm, "sending MapPhaseEnd to", i)
                 comm.send(None, dest=i, tag=tags.MapPhaseEnd)
 
         # non root processes
         else:
             msg = comm.recv(source=0, tag = tags.StartMapPhase)
-            print("Received StartMapPhase")
-            print(msg)
+            # print("Received StartMapPhase")
+            # print(msg)
             # mapper_fn.execute(my_task.key, my_task.value, self.__intermediate_store)
             ping_flag = True
             current_task_id = -1
@@ -161,7 +167,7 @@ class map_handler:
             def ping_root():
                 while ping_flag != False:
                 #    if current_task_id != -1:
-                    print("Sending Pinggggg")
+                    # print("Sending Pinggggg")
                     comm.send(current_task_id, dest=0, tag = tags.MapPhasePing)
                 #   print(self.__specs.get_ping_frequency())
                 #   print("ping")
@@ -178,23 +184,23 @@ class map_handler:
                 # Probe for a message
                 msg_status = MPI.Status()
                 msg = comm.recv(source=0, tag=MPI.ANY_TAG, status=msg_status)
-                print(msg)
+                # print(msg)
                 # Check message tag
                 if msg_status.Get_tag() == tags.AssignedMapTask:
-                    print("message printing here")
-                    print(msg)
+                    # print("message printing here")
+                    # print(msg)
                     task = pickle.loads(msg)
-                    print(task)
-                    print(task.id)
+                    # print(task)
+                    # print(task.id)
                     # task_id, inputs = msg
                     # task_id = msg.id
 
                     # print("")
                     current_task_id = task.id
 
-                    print("Process", rank, "received tags.AssignedMapTask with task id", task.id)
+                    # print("Process", rank, "received tags.AssignedMapTask with task id", task.id)
                     for i in range(0, len(task.key)):
-                        print("Process", rank, "executing map function on key", task.key[i])
+                        # print("Process", rank, "executing map function on key", task.key[i])
                         # , "with", len(values), "values.")
                         mapper_fn.execute(task.key[i], task.value[i], self.__intermediate_store)
                     
@@ -204,11 +210,11 @@ class map_handler:
                     #         mapper_fn.execute(key, value, self.__input_store)
 
                     current_task_id = -1
-                    print("Process", rank, "sent MapTaskCompletion with task id", task.id)
+                    # print("Process", rank, "sent MapTaskCompletion with task id", task.id)
                     comm.send(task.id, dest=0, tag=tags.CompletedMapTask)
                     
                 elif msg_status.Get_tag() == tags.MapPhaseEnd:
-                    print("Process", rank, "received MapPhaseEnd")
+                    # print("Process", rank, "received MapPhaseEnd")
                     break
 
                 else:
