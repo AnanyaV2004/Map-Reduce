@@ -196,7 +196,7 @@ class map_handler:
                     for i in range(0, len(task.key)):
                         print("Process", rank, "executing map function on key", task.key[i])
                         # , "with", len(values), "values.")
-                        mapper_fn.execute(task.key[i], task.value[i], self.__input_store)
+                        mapper_fn.execute(task.key[i], task.value[i], self.__intermediate_store)
                     
                     # for key, values in inputs.items():
                     #     print("Process", rank, "executing map function on key", key, "with", len(values), "values.")

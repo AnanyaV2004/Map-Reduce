@@ -13,7 +13,7 @@ class Map:
         print("executing user mapper function")
         print(keys)
         print(values)
-        for word in values:
+        for word in values.split(' '):
             output_store.emit(word, 1)
 
 class Reduce:

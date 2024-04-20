@@ -46,20 +46,28 @@ class map_combine_handler:
         self.__specs = specs
 
     def run(self, combine_fn):
-        self.run_combine_phase()
+        self.run_combine_phase(combine_fn)
         self.__comm.barrier()
         self.run_shuffle_phase()
 
     def run_combine_phase(self, combine_fn):
-
+          
         # if not isinstance(combiner_t, DefaultCombiner[IntermediateStore.key_t, IntermediateStore.value_t]):
         combiner_istore = store()
-        for key in istore.get_keys():
-            values = istore.get_key_values(key)
-            combine_fn(key, values, combiner_istore)
+        print("istore:")
+        print(self.__istore.get_keys(),len(self.__istore.get_keys()))
+        for key in self.__istore.get_keys():
+            values = self.__istore.get_key_values(key)
+            print("key value pair in istore:")
+            print(key,values)
+            combine_fn.execute(key, values, combiner_istore)
         
-        istore = combiner_istore
-
+        self.__istore = combiner_istore
+        print("key value pair in combiner istore:")
+        for key in self.__istore.get_keys():
+            values = self.__istore.get_key_values(key)
+            print(key,values)
+            
 
     def run_shuffle_phase(self):
         # workers has the list of ranks of the map processes in `comm`
