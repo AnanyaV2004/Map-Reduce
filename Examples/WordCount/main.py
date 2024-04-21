@@ -2,7 +2,7 @@ from mpi4py import MPI
 import sys
 import multiprocessing
 import argparse
-
+import time
 # sys.path.insert(0, '/home/shambhavi/Documents/3-2/DS/project/our-version/Map-Reduce/Library')
 import sys
 import os
@@ -47,6 +47,7 @@ if __name__ == "__main__":
     size = mpi_comm.Get_size()
     if rank == 0:
         print("MapReduce Example: Wordcount")
+        start_time = time.time()  # Record the start time
 
     default_num_workers = multiprocessing.cpu_count()
     parser = argparse.ArgumentParser(description='Options')
@@ -81,9 +82,12 @@ if __name__ == "__main__":
     if rank == 0:
         print("FINAL OUTPUT")
         keys = output_store.get_keys()
-        print(len(keys))
+        # print(len(keys))
         for key in keys:
             print(key,output_store.get_key_values(key)[0])
+        end_time = time.time()  # Record the end time
+        execution_time = end_time - start_time  # Calculate the execution time
+        print("Execution time:", execution_time, "seconds")
 
 
         
