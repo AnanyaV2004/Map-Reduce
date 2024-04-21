@@ -3,8 +3,24 @@ from mpi4py import MPI
 import heapq
 from storage import store
 import tags
+from functools import reduce
 
-# Define run_combine_phase function
+class DefaultCombiner:
+    # Define a custom function to dynamically select the appropriate operation
+    def __custom_reduce(self,iterable):
+        if all(isinstance(item, int) for item in iterable):
+        # If all elements are integers, use addition
+            return reduce(lambda x, y: x + y, iterable)
+        elif all(isinstance(item, float) for item in iterable):
+        # If all elements are floats, use addition
+            return reduce(lambda x, y: x + y, iterable)
+        # Add more elif blocks for other datatypes and corresponding operations
+        else:
+        # Default case: use the first element as the initial value and concatenate strings
+            return reduce(lambda x, y: str(x) + str(y), iterable)
+        
+    def execute(self, key, values, store):
+        store.emit(key, self.__custom_reduce(values))
 
 class map_combine_handler:
 
@@ -13,17 +29,12 @@ class map_combine_handler:
         self.__comm = comm
         self.__specs = specs
 
-    def run(self, combine_fn):
+    def run(self, combine_fn = DefaultCombiner()):
         self.run_combine_phase(combine_fn)
         self.__comm.barrier()
-        if(self.__comm.Get_rank() == 1):
-            print("PRINTING INTERMEDIATE STORAGE AFTER MAP COMBINE PHASE")
-            for key in self.__istore.get_keys():
-                print(key, self.__istore.get_key_values(key))
         self.run_shuffle_phase()
+        return self.__istore
         
-            
-
     def run_combine_phase(self, combine_fn):
           
         # if not isinstance(combiner_t, DefaultCombiner[IntermediateStore.key_t, IntermediateStore.value_t]):
@@ -37,10 +48,6 @@ class map_combine_handler:
             combine_fn.execute(key, values, combiner_istore)
         
         self.__istore = combiner_istore
-        # print("printing key value pairs after combine phase :\n")
-        # for key in self.__istore.get_keys():
-            # values = self.__istore.get_key_values(key)
-            # print(key,values)
             
 
     def run_shuffle_phase(self):
@@ -67,7 +74,7 @@ class map_combine_handler:
             # print(global_counts)
     
             key_counts = [(value, key) for key, value in global_counts.items()]
-            key_counts.sort(reverse=True)
+            key_counts.sort()
     
             load_balancer_pq = [(0, i) for i in range(len(reduce_workers))]
             heapq.heapify(load_balancer_pq)
@@ -84,6 +91,10 @@ class map_combine_handler:
             new_istore = store()
             if comm.rank in map_workers:
                 counts = self.__istore.get_key_counts()
+                # print("COUNTS: ")
+                # for key in istore.get_keys():
+                    # print(key,istore.get_key_values(key))
+                    
                 comm.send(counts, dest=0, tag=tags.ShuffleIntermediateCounts)
     
                 process_map = comm.recv(source=0, tag=tags.ShuffleDistributionMap)
@@ -110,31 +121,31 @@ class map_combine_handler:
                         msg= comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
                          # Get the tag of the received message from the status object
                         tag=status.Get_tag()
-                        print("msg tag ",tag)
-                        print(msg is None)
-                        print("Received message:", msg)  # Add this line for debugging
+                        # print("msg tag ",tag)
+                        # print(msg is None)
+                        # print("Received message:", msg)  # Add this line for debugging
                         if msg is not None:  # Check if msg is not None before accessing its attributes
                             if tag == tags.ShufflePayloadDelivery:
                                 key, values = msg
-                                print("recieved message : " , key , values)
+                                # print("recieved message : " , key , values)
                                 new_istore.emit(key, values)
                             elif tag == tags.ShufflePayloadDeliveryComplete:
-                                print("here")
+                                # print("here")
                                 # msg = comm.recv(source=msg.source, tag=tags.ShufflePayloadDeliveryComplete)
-                                print("recieved shufflepay complete msg")
+                                # print("recieved shufflepay complete msg")
                                 awaiting_completion -= 1
                             else:
                                 assert 0
                         else:
-                            print("Received None message, skipping processing.")  # Add this line for debugging
+                            pass
+                            # print("Received None message, skipping processing.")  # Add this line for debugging
 
-        
+            
             self.__istore = new_istore
+            # print("PRINTING")
+            # for key in self.__istore.get_keys():
+            #     print(key,self.__istore.get_key_values(key))
     
-class DefaultCombiner:
-    def combine(self, key, start, end, store):
-        while start != end:
-            store.emit(key, start)
-            start += 1
+
 
 

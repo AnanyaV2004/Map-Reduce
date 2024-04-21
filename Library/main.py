@@ -10,9 +10,6 @@ from job import job
 
 class Map:
     def execute(self, keys, values, output_store):
-        print("executing user mapper function")
-        print(keys)
-        print(values)
         for word in values.split(' '):
             output_store.emit(word, 1)
 
