@@ -68,6 +68,7 @@ if __name__ == "__main__":
     job.run(map_fn, combiner_fn, reducer_fn, mpi_comm, input_store, output_store)
 
     if rank == 0:
+        print("FINAL OUTPUT")
         keys = output_store.get_keys()
         print(len(keys))
         for key in keys:

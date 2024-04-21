@@ -29,35 +29,44 @@ class reduce_gather_handler:
         if not self.__spec.get_gather_on_master():
             return
 
-        reduce_workers = list(range(1, self.__spec.get_num_reduce_workers() + 1))
+        reduce_workers = list(range(1, self.__spec.get_num_reducers() + 1))
 
         if comm.rank == 0:
             awaiting_completion = len(reduce_workers)
             while awaiting_completion:
-                msg = comm.probe()
-                if msg.tag == tags.GatherPayloadDelivery:
-                    key, values = comm.recv(msg.source, tags.GatherPayloadDelivery)
-                    self.output_store.emit(key, values)
-                    print(comm, "recvd GatherPayloadDelivery with key", key, "from", msg.source)
-
-                elif msg.tag == tags.GatherPayloadDeliveryComplete:
-                    comm.recv(msg.source, tags.GatherPayloadDeliveryComplete)
-                    print(comm, "recvd GatherPayloadDeliveryComplete from", msg.source)
+                msg = MPI.Status()
+                data = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=msg)
+                print("STATUSSS")
+                print(msg.Get_tag())
+                if msg.Get_tag() == tags.GatherPayloadDelivery:
+                    # key, values = comm.recv(msg.Get_source(), tags.GatherPayloadDelivery)
+                    key, values = data
+                    self.__output_store.emit(key, values)
+                    print(comm, "recvd GatherPayloadDelivery with key", key, "from", msg.Get_source())
+                
+                elif msg.Get_tag() == tags.GatherPayloadDeliveryComplete:
+                    # comm.recv(msg.Get_source(), tags.GatherPayloadDeliveryComplete)
+                    print(comm, "recvd GatherPayloadDeliveryComplete from", msg.Get_source())
                     awaiting_completion -= 1
-
-                elif msg.tag == tags.MapPhasePing:
-                    comm.recv(msg.source, tags.MapPhasePing)
-
+                
+                elif msg.Get_tag() == tags.MapPhasePing:
+                    # comm.recv(msg.Get_source(), tags.MapPhasePing)
+                    print(msg.Get_tag())
+                    pass
+                
                 else:
-                    assert 0
+                    print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+                    print(msg.Get_tag())
+                    pass
+                    # assert 0
 
         elif comm.rank in reduce_workers:
             for key in self.__output_store.get_keys():
                 values = self.__output_store.get_key_values(key)
-                comm.send(0, tags.GatherPayloadDelivery, (key, values))
+                comm.send((key, values), dest=0, tag=tags.GatherPayloadDelivery )
                 print(comm, "sent GatherPayloadDelivery with key", key, "to master")
 
-            comm.send(0, tags.GatherPayloadDeliveryComplete)
+            comm.send(None, dest = 0, tag = tags.GatherPayloadDeliveryComplete)
             print(comm, "sent GatherPayloadDeliveryComplete to master")
 
    #eg

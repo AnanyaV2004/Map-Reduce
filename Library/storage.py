@@ -65,6 +65,7 @@ class store():
         return counts
 
     def get_keys(self):
+        self.__pairs = {key: self.__pairs[key] for key in sorted(self.__pairs.keys())}
         return list(self.__pairs.keys())
 
     def is_key_present(self, key):
