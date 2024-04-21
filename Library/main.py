@@ -14,16 +14,9 @@ class Map:
             output_store.emit(word, 1)
 
 class Reduce:
-    def execute(self, keys, values, output_store):
-        word = keys[0]
-        count = 0
-        for key in keys:
-            if key == word:
-                count += 1
-            else:
-                output_store.emit(word, count)
-                word = key
-                count = 1
+    def execute(self, key, values, output_store):
+        output_store.emit(key,sum(values))
+        
 
 class Combine:
     def execute(self, key, values, output_store):

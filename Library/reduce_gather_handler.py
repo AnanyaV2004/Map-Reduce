@@ -11,25 +11,25 @@ class reduce_gather_handler:
         self.__istore = intermediate_store
 
     def run(self, reduce_fn):
-        self.run_reduce_phase(self.spec, self.comm, reduce_fn)
+        self.run_reduce_phase(reduce_fn)
         self.__comm.barrier()
-        self.run_gather_phase(self.spec, self.comm)
+        self.run_gather_phase()
 
     def run_reduce_phase(self, reduce_fn):
-        if self.__comm.rank() != 0:
+        if self.__comm.rank != 0:
             for key in self.__istore.get_keys():
                 values = self.__istore.get_key_values(key)
                 reduce_fn.execute(key, values, self.__output_store)
-                self.log(self.__comm, f"exec reducefn on key \"{key}\" with total of {len(values)} values.")
+                print(self.__comm, f"exec reducefn on key \"{key}\" with total of {len(values)} values.")
 
     def run_gather_phase(self):
 
         comm = self.__comm
         
-        if not self.spec.gather_on_master:
+        if not self.__spec.get_gather_on_master():
             return
 
-        reduce_workers = list(range(1, self.spec.num_reduce_workers + 1))
+        reduce_workers = list(range(1, self.__spec.get_num_reduce_workers() + 1))
 
         if comm.rank == 0:
             awaiting_completion = len(reduce_workers)
@@ -38,14 +38,14 @@ class reduce_gather_handler:
                 if msg.tag == tags.GatherPayloadDelivery:
                     key, values = comm.recv(msg.source, tags.GatherPayloadDelivery)
                     self.output_store.emit(key, values)
-                    self.log(comm, "recvd GatherPayloadDelivery with key", key, "from", msg.source)
+                    print(comm, "recvd GatherPayloadDelivery with key", key, "from", msg.source)
 
-                elif msg.tag == tags.GatherPayloadDelivery:
+                elif msg.tag == tags.GatherPayloadDeliveryComplete:
                     comm.recv(msg.source, tags.GatherPayloadDeliveryComplete)
-                    self.log(comm, "recvd GatherPayloadDeliveryComplete from", msg.source)
+                    print(comm, "recvd GatherPayloadDeliveryComplete from", msg.source)
                     awaiting_completion -= 1
 
-                elif msg.tag == tags.GatherPayloadDelivery:
+                elif msg.tag == tags.MapPhasePing:
                     comm.recv(msg.source, tags.MapPhasePing)
 
                 else:
@@ -55,10 +55,10 @@ class reduce_gather_handler:
             for key in self.__output_store.get_keys():
                 values = self.__output_store.get_key_values(key)
                 comm.send(0, tags.GatherPayloadDelivery, (key, values))
-                self.log(comm, "sent GatherPayloadDelivery with key", key, "to master")
+                print(comm, "sent GatherPayloadDelivery with key", key, "to master")
 
             comm.send(0, tags.GatherPayloadDeliveryComplete)
-            self.log(comm, "sent GatherPayloadDeliveryComplete to master")
+            print(comm, "sent GatherPayloadDeliveryComplete to master")
 
    #eg
     # class Specifications:

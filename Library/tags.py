@@ -15,5 +15,4 @@ ShufflePayloadDeliveryComplete = 9
 ShufflePhaseEnd = 10
 GatherPayloadDeliveryComplete = 20
 GatherPayloadDelivery = 11
-GatherPayloadDeliveryComplete = 12
 
