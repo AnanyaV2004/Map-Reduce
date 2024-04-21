@@ -4,9 +4,20 @@ import multiprocessing
 import argparse
 
 # sys.path.insert(0, '/home/shambhavi/Documents/3-2/DS/project/our-version/Map-Reduce/Library')
+import sys
+import os
+
+# Add the parent directory (Library) to the Python module search path
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../Library"))
+sys.path.append(parent_dir)
+
+# # Now you can import the module from the Library directory
+# from Library.storage import store
 
 from storage import store
 from job import job
+
+# from Map-Reduce.Library.storage import store
 
 class Map:
     def execute(self, keys, values, output_store):
@@ -72,7 +83,7 @@ if __name__ == "__main__":
         keys = output_store.get_keys()
         print(len(keys))
         for key in keys:
-            print(key,output_store.get_key_values(key))
+            print(key,output_store.get_key_values(key)[0])
 
 
         
