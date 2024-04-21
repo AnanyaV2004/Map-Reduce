@@ -11,6 +11,8 @@ Implemented map reduce functionality as python libraries. Handles node failure a
     - Run the below command:
         
         `mpiexec -np <no_processes> python3 main.py --directory <input_dir> --num-map-workers <num_mappers> --num-reduce-workers <num_reducers>` 
+    - If you want to run it for more mappers, and it throws an error, try using the below command:
+        `mpiexec -np <no_processes> --use-hwthread-cpus --oversubscribe python3 main.py --directory <input_dir> --num-map-workers <num_mappers> --num-reduce-workers <num_reducers>` 
     - The output will be printed in the terminal
 
 ## Dependencies:
