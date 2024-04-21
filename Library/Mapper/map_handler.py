@@ -29,6 +29,7 @@ class map_handler:
         # assert(comm.Get_size() >= self.__specs.get_num_mappers()+1)
 
         # root process
+        map_workers = range(1,self.__specs.get_num_mappers()+1)
         if(rank == 0):
 
             for i in range(1, self.__specs.get_num_mappers()+1):
@@ -44,7 +45,7 @@ class map_handler:
 
             map_tasks_pending = 0
             failed_tasks = 0
-            input_tasks = map_input_handler(self.__input_store)
+            input_tasks = map_input_handler(self.__input_store, self.__specs.get_num_mappers())
             # print("all tasks in input_tasks")
             # print(input_tasks.get_all_tasks())
 
@@ -95,7 +96,7 @@ class map_handler:
                     for task in self.__map_tasks:
                         cur_time = datetime.now()
                         last_ping_time = task.last_ping_time
-                        if (cur_time - last_ping_time) > self.__specs.get_ping_failure_time() and task.worker != -1 and task.status != "completed":
+                        if ((cur_time - last_ping_time) > self.__specs.get_ping_failure_time() and task.worker != -1 and task.status != "completed"):
                             # print((cur_time - last_ping_time).total_seconds() * 1000, "ms delay")
                             print(comm, "worker", task.worker, "has failed; saving tasks for re-execution")
                             
@@ -131,7 +132,7 @@ class map_handler:
 
                         next_task = input_tasks.get_next_task()
                         if next_task:
-                            assign_task(msg_status_root.Get_source(), next_task, map_tasks_pending)
+                            map_tasks_pending = assign_task(msg_status_root.Get_source(), next_task, map_tasks_pending)
 
                         else:
                             if failed_tasks:
@@ -140,7 +141,7 @@ class map_handler:
 
                                     # re assign tasks
                                     if task.worker == -1:
-                                        assign_task(msg_status_root.Get_source(), task, map_tasks_pending, True)
+                                        map_tasks_pending = assign_task(msg_status_root.Get_source(), task, map_tasks_pending, True)
                                         failed_tasks -= 1
 
                     else:
@@ -155,7 +156,7 @@ class map_handler:
                 comm.send(None, dest=i, tag=tags.MapPhaseEnd)
 
         # non root processes
-        else:
+        elif comm.rank in map_workers:
             msg = comm.recv(source=0, tag = tags.StartMapPhase)
             # print("Received StartMapPhase")
             # print(msg)
@@ -199,10 +200,10 @@ class map_handler:
                     current_task_id = task.id
 
                     # print("Process", rank, "received tags.AssignedMapTask with task id", task.id)
-                    for i in range(0, len(task.key)):
+                    # for i in range(0, len(task.key)):
                         # print("Process", rank, "executing map function on key", task.key[i])
                         # , "with", len(values), "values.")
-                        mapper_fn.execute(task.key[i], task.value[i], self.__intermediate_store)
+                    mapper_fn.execute(task.key, task.value, self.__intermediate_store)
                     
                     # for key, values in inputs.items():
                     #     print("Process", rank, "executing map function on key", key, "with", len(values), "values.")
@@ -222,4 +223,7 @@ class map_handler:
 
             ping_flag = False
             ping_thread.join()
+        
+        else:
+            pass
                     

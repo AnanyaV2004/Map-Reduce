@@ -21,8 +21,9 @@ from job import job
 
 class Map:
     def execute(self, keys, values, output_store):
-        for word in values.split(' '):
-            output_store.emit(word, 1)
+        for value in values:
+            for word in value.split(' '):
+                output_store.emit(word, 1)
 
 class Reduce:
     def execute(self, key, values, output_store):

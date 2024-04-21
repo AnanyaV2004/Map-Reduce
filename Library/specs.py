@@ -2,7 +2,7 @@ from datetime import timedelta
 
 class specs:
     def __init__(self,num_mappers, num_reducers, gather_on_master=True):
-        self.__ping_frequency = timedelta(milliseconds=1000)
+        self.__ping_frequency = timedelta(milliseconds=50)
         self.__ping_failure_time = timedelta(milliseconds=2000)
         self.__num_mappers = num_mappers
         self.__num_reducers = num_reducers

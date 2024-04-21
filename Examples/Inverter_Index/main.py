@@ -2,7 +2,7 @@ from mpi4py import MPI
 import sys
 import multiprocessing
 import argparse
-
+import time
 # sys.path.insert(0, '/home/shambhavi/Documents/3-2/DS/project/our-version/Map-Reduce/Library')
 import sys
 import os
@@ -21,10 +21,11 @@ from job import job
 
 class Map:
     def execute(self, keys, values, output_store):
-        words = values.split()
-        key = words[0]
-        for i in range(1, len(words)):
-            output_store.emit(words[i], key)
+        for value in values:
+            words = value.split()
+            key = words[0]
+            for i in range(1, len(words)):
+                output_store.emit(words[i], key)
 
 class Reduce:
     def execute(self, key, values, output_store):
@@ -45,7 +46,8 @@ if __name__ == "__main__":
     rank = mpi_comm.Get_rank()
     size = mpi_comm.Get_size()
     if rank == 0:
-        print("MapReduce Example: Wordcount")
+        print("MapReduce Example: Inverted Index")
+        start_time = time.time()  # Record the start time
 
     default_num_workers = multiprocessing.cpu_count()
     parser = argparse.ArgumentParser(description='Options')
