@@ -16,7 +16,7 @@ class map_input_handler:
     def __make_tasks_array(self,store,num_mappers):
         keys = store.get_keys()
         no_lines = len(keys)
-        each_mapper = max(1,int(no_lines/num_mappers))
+        each_mapper = max(1,int(no_lines/num_mappers)+1)
         # print("each mapper:", each_mapper)
 
         # LOad balancing to give approx equal number of keys/lines to each task
